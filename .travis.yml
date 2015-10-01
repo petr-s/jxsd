@@ -6,4 +6,4 @@ jdk:
   - openjdk7
 
 after_success:
-  - ./gradlew jacocoTestReport coveralls
+  - gradle jacocoTestReport coveralls
