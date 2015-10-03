@@ -14,6 +14,11 @@ public class XMLWriter {
     private static final String EOL = System.lineSeparator();
     private int indent = 2;
     private String encoding;
+    private NameNormalizer normalizer = NameNormalizer.DEFAULT;
+
+    public synchronized void setNameNormalizer(NameNormalizer normalizer) {
+        this.normalizer = normalizer;
+    }
 
     public void setIndent(int indent) {
         this.indent = indent;
@@ -36,7 +41,7 @@ public class XMLWriter {
             addEncoding(result, pretty);
         }
         try {
-            element2xml(elementFromClass(root.getClass()), root, result, 0, pretty);
+            element2xml(elementFromClass(normalizer, root.getClass()), root, result, 0, pretty);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
@@ -90,7 +95,7 @@ public class XMLWriter {
                 if (pretty) {
                     result.append(EOL);
                 }
-                element2xml(elementFromClass(item.getClass()), item, result, level + 1, pretty);
+                element2xml(elementFromClass(normalizer, item.getClass()), item, result, level + 1, pretty);
             }
         }
         if (pretty && element.getChildren().size() > 0) {

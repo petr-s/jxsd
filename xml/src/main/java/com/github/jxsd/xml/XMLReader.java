@@ -6,7 +6,6 @@ import com.github.jxsd.xml.exception.RequiredAttributeException;
 import com.github.jxsd.xml.exception.UnexpectedElementException;
 import com.github.jxsd.xml.reflect.AttributeTemplate;
 import com.github.jxsd.xml.reflect.ElementTemplate;
-import com.github.jxsd.xml.reflect.Reflect;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -22,9 +21,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import static com.github.jxsd.xml.reflect.Reflect.elementFromClass;
+
 public class XMLReader {
+    private NameNormalizer normalizer = NameNormalizer.DEFAULT;
+
+    public synchronized void setNameNormalizer(NameNormalizer normalizer) {
+        this.normalizer = normalizer;
+    }
+
     public synchronized <T> T read(InputStream inputStream, Class<T> clazz) throws IOException {
-        final ElementTemplate root = Reflect.elementFromClass(clazz);
+        final ElementTemplate root = elementFromClass(normalizer, clazz);
         try {
             SAXParserFactory spf = SAXParserFactory.newInstance();
             spf.setNamespaceAware(true);

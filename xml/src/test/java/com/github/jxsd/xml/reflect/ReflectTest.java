@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.List;
 
+import static com.github.jxsd.xml.NameNormalizer.FIRST_LOWER_CASE;
 import static com.github.jxsd.xml.reflect.Reflect.elementFromClass;
 import static org.junit.Assert.*;
 
@@ -27,6 +28,38 @@ public class ReflectTest {
         assertEquals("a", element.name);
         assertEquals(0, element.attributes.size());
         assertEquals(0, element.children.size());
+        assertNull(element.getValue());
+    }
+
+    @Test
+    public void testElementFromClassEmptyFirstLowerCaseNormalizer() {
+        class Asd {
+        }
+        ElementTemplate element = elementFromClass(FIRST_LOWER_CASE, Asd.class);
+        assertEquals(Asd.class, element.clazz);
+        assertEquals("asd", element.name);
+        assertEquals(0, element.attributes.size());
+        assertEquals(0, element.children.size());
+        assertNull(element.getValue());
+    }
+
+    @Test
+    public void testElementFromClassFirstLowerCaseNormalizer() {
+        class TestNode {
+        }
+        class Asd {
+            String FirstAttribute;
+            String secondAttribute;
+            List<TestNode> Children;
+        }
+        ElementTemplate element = elementFromClass(FIRST_LOWER_CASE, Asd.class);
+        assertEquals(Asd.class, element.clazz);
+        assertEquals("asd", element.name);
+        assertEquals(2, element.attributes.size());
+        assertTrue(element.attributes.containsKey("firstAttribute"));
+        assertTrue(element.attributes.containsKey("secondAttribute"));
+        assertEquals(1, element.children.size());
+        assertEquals("testNode", element.children.get(0).name);
         assertNull(element.getValue());
     }
 
