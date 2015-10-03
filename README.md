@@ -20,3 +20,13 @@ class B {
     List<A> children;
 }
 ```
+
+##Benchmark
+| Test name | Total time  | Time per single run |
+| --- | --- | --- |
+|JXSD read|400ms|40ms|
+```
+Java: 1.7.0_51 Oracle Corporation
+OS: Windows 7 x86 
+CPU: Intel64 Family 6 Model 60 Stepping 3, GenuineIntel
+```
