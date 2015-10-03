@@ -1,0 +1,10 @@
+apply plugin: 'java'
+
+dependencies {
+    compile project(":xml")
+    compile('org.simpleframework:simple-xml:2.7.+') {
+        exclude module: 'stax'
+        exclude module: 'stax-api'
+        exclude module: 'xpp3'
+    }
+}
