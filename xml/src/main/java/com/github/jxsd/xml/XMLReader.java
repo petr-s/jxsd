@@ -140,14 +140,23 @@ public class XMLReader {
             stack.pop();
         }
 
+        private Object parseAttribute(Class<?> clazz, String value) {
+            // TODO : rest common data-types
+            if (clazz.equals(int.class) || clazz.equals(Integer.class)) {
+                return Integer.valueOf(value);
+            }
+            return value;
+        }
+
         private void processAttributes(ElementTemplate element, Object instance, Attributes xmlAttributes) {
             for (Map.Entry<String, AttributeTemplate> entry : element.getAttributes().entrySet()) {
-                Object value = xmlAttributes.getValue(entry.getKey());
+                String value = xmlAttributes.getValue(entry.getKey());
                 if (entry.getValue().hasAnnotation(Required.class) && value == null) {
                     throw new RequiredAttributeException(element.getName(), entry.getKey(), locator.getLineNumber(), locator.getColumnNumber());
                 }
                 try {
-                    entry.getValue().getField().set(instance, value);
+                    Class<?> clazz = entry.getValue().getField().getType();
+                    entry.getValue().getField().set(instance, parseAttribute(clazz, value));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
