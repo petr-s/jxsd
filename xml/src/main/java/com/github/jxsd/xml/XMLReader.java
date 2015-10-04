@@ -4,6 +4,7 @@ import com.github.jxsd.xml.annotation.Required;
 import com.github.jxsd.xml.exception.InaccessibleClassException;
 import com.github.jxsd.xml.exception.RequiredAttributeException;
 import com.github.jxsd.xml.exception.UnexpectedElementException;
+import com.github.jxsd.xml.exception.UnsupportedAttributeType;
 import com.github.jxsd.xml.reflect.AttributeTemplate;
 import com.github.jxsd.xml.reflect.ElementTemplate;
 import org.xml.sax.Attributes;
@@ -141,11 +142,20 @@ public class XMLReader {
         }
 
         private Object parseAttribute(Class<?> clazz, String value) {
-            // TODO : rest common data-types
-            if (clazz.equals(int.class) || clazz.equals(Integer.class)) {
+            if (clazz.equals(String.class)) {
+                return value;
+            } else if (clazz.equals(short.class) || clazz.equals(Short.class)) {
+                return Short.valueOf(value);
+            } else if (clazz.equals(int.class) || clazz.equals(Integer.class)) {
                 return Integer.valueOf(value);
+            } else if (clazz.equals(long.class) || clazz.equals(Long.class)) {
+                return Long.valueOf(value);
+            } else if (clazz.equals(float.class) || clazz.equals(Float.class)) {
+                return Float.valueOf(value);
+            } else if (clazz.equals(double.class) || clazz.equals(Double.class)) {
+                return Double.valueOf(value);
             }
-            return value;
+            return null;
         }
 
         private void processAttributes(ElementTemplate element, Object instance, Attributes xmlAttributes) {
@@ -156,7 +166,11 @@ public class XMLReader {
                 }
                 try {
                     Class<?> clazz = entry.getValue().getField().getType();
-                    entry.getValue().getField().set(instance, parseAttribute(clazz, value));
+                    Object typedValue = parseAttribute(clazz, value);
+                    if (typedValue == null) {
+                        throw new UnsupportedAttributeType(element.getName(), clazz, locator.getLineNumber(), locator.getColumnNumber());
+                    }
+                    entry.getValue().getField().set(instance, typedValue);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
