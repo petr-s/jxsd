@@ -70,6 +70,14 @@ public class XMLReaderTest extends TestCase {
         assertEquals(1, root.es.size());
     }
 
+    @Test
+    public void testReadValueWhiteSpaces() throws IOException {
+        XMLReader reader = new XMLReader();
+        c root = reader.read(string("<c>\n\t foo\n</c>"), c.class);
+        assertNotNull(root);
+        assertEquals("foo", root.value);
+    }
+
     static class a {
         @Required
         String foo;

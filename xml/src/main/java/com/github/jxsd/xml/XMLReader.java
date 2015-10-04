@@ -131,7 +131,7 @@ public class XMLReader {
             StackElement last = stack.peek();
             if (last.element.getValue() != null) {
                 try {
-                    last.element.getValue().set(last.instance, text.toString());
+                    last.element.getValue().set(last.instance, text.toString().replaceAll("\\s", ""));
                     text.setLength(0);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
