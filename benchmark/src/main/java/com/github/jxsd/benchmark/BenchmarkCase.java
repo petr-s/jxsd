@@ -3,11 +3,11 @@ package com.github.jxsd.benchmark;
 import static java.lang.System.currentTimeMillis;
 
 public abstract class BenchmarkCase {
-    abstract String getDescription();
+    public abstract String getDescription();
 
-    abstract void prepare() throws Exception;
+    public abstract void prepare() throws Exception;
 
-    abstract void run();
+    public abstract void run();
 
     long time(int n) {
         try {
