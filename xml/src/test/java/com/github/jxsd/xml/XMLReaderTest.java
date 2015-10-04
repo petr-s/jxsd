@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static com.github.jxsd.xml.NameNormalizer.FIRST_LOWER_CASE;
 import static org.junit.Assert.*;
 
 public class XMLReaderTest extends TestCase {
@@ -129,6 +130,44 @@ public class XMLReaderTest extends TestCase {
         assertEquals(42.42, root.b.doubleValue(), 0.001);
     }
 
+    @Test
+    public void testReadRootBreak() throws IOException {
+        XMLReader reader = new XMLReader();
+        reader.setBreakHandler(new XMLReader.BreakHandler() {
+            @Override
+            public boolean onElement(Object element) {
+                return element.getClass().equals(b.class);
+            }
+        });
+        b root = reader.read(string("<b><a foo=\"test\"/></b>"), b.class);
+        assertNotNull(root);
+        assertNull(root.as);
+    }
+
+    @Test
+    public void testReadBreak() throws IOException {
+        XMLReader reader = new XMLReader();
+        reader.setBreakHandler(new XMLReader.BreakHandler() {
+            @Override
+            public boolean onElement(Object element) {
+                return element.getClass().equals(b.class);
+            }
+        });
+        g root = reader.read(string("<g><b><a foo=\"test\"/></b></g>"), g.class);
+        assertNotNull(root);
+        assertNotNull(root.bs);
+        assertEquals(1, root.bs.size());
+        assertNull(root.bs.get(0).as);
+    }
+
+    @Test
+    public void testNameNormalizer() throws IOException {
+        XMLReader reader = new XMLReader();
+        reader.setNameNormalizer(FIRST_LOWER_CASE);
+        b root = reader.read(string("<B><A Foo=\"test\"/></B>"), b.class);
+        assertNotNull(root);
+    }
+
     static class a {
         @Required
         String foo;
@@ -155,6 +194,10 @@ public class XMLReaderTest extends TestCase {
 
     static class f {
         Object x;
+    }
+
+    static class g {
+        List<b> bs;
     }
 
     static class ShortElement {

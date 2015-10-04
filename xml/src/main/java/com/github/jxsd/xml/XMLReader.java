@@ -17,15 +17,18 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 import static com.github.jxsd.xml.reflect.Reflect.elementFromClass;
 
 public class XMLReader {
     private NameNormalizer normalizer = NameNormalizer.DEFAULT;
+    private BreakHandler breakHandler = new BreakHandler() {
+        @Override
+        public boolean onElement(Object element) {
+            return false;
+        }
+    };
 
     public synchronized void setNameNormalizer(NameNormalizer normalizer) {
         this.normalizer = normalizer;
@@ -33,20 +36,35 @@ public class XMLReader {
 
     public synchronized <T> T read(InputStream inputStream, Class<T> clazz) throws IOException {
         final ElementTemplate root = elementFromClass(normalizer, clazz);
+        SaxHandler<T> handler = new SaxHandler<>(root);
         try {
             SAXParserFactory spf = SAXParserFactory.newInstance();
             spf.setNamespaceAware(true);
             org.xml.sax.XMLReader reader = spf.newSAXParser().getXMLReader();
-            SaxHandler<T> handler = new SaxHandler<>(root);
             reader.setContentHandler(handler);
             reader.parse(new InputSource(inputStream));
             return handler.getRoot();
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         } catch (SAXException e) {
+            if (e instanceof BreakException) {
+                return handler.getRoot();
+            }
             e.printStackTrace();
         }
         return null;
+    }
+
+    public synchronized void setBreakHandler(BreakHandler breakHandler) {
+        this.breakHandler = breakHandler;
+    }
+
+    public interface BreakHandler {
+        boolean onElement(Object element);
+    }
+
+    private class BreakException extends SAXException {
+
     }
 
     private class StackElement {
@@ -90,14 +108,27 @@ public class XMLReader {
             return null;
         }
 
+        private HashMap<String, String> normalizeAttributes(Attributes attributes) {
+            HashMap<String, String> normalizedAttributes = new HashMap<>();
+            for (int i = 0; i < attributes.getLength(); i++) {
+                normalizedAttributes.put(normalizer.normalize(attributes.getLocalName(i)), attributes.getValue(i));
+            }
+            return normalizedAttributes;
+        }
+
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            localName = normalizer.normalize(localName);
+            HashMap<String, String> normalizedAttributes = normalizeAttributes(attributes);
             if (stack.isEmpty()) {
                 if (!element.getName().equals(localName)) {
                     throw new UnexpectedElementException(localName, locator.getLineNumber(), locator.getColumnNumber());
                 }
                 root = newInstance(element);
-                processAttributes(element, root, attributes);
+                processAttributes(element, root, normalizedAttributes);
+                if (breakHandler.onElement(root)) {
+                    throw new BreakException();
+                }
                 stack.push(new StackElement(element, root));
             } else {
                 StackElement parent = stack.peek();
@@ -106,7 +137,7 @@ public class XMLReader {
                 }
                 ElementTemplate childElement = parent.element.getChild(localName);
                 Object newChild = newInstance(childElement);
-                processAttributes(childElement, newChild, attributes);
+                processAttributes(childElement, newChild, normalizedAttributes);
                 try {
                     List list = (List) childElement.getField().get(parent.instance);
                     if (list == null) {
@@ -117,7 +148,9 @@ public class XMLReader {
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-
+                if (breakHandler.onElement(newChild)) {
+                    throw new BreakException();
+                }
                 stack.push(new StackElement(childElement, newChild));
             }
         }
@@ -158,9 +191,9 @@ public class XMLReader {
             return null;
         }
 
-        private void processAttributes(ElementTemplate element, Object instance, Attributes xmlAttributes) {
+        private void processAttributes(ElementTemplate element, Object instance, HashMap<String, String> attributes) {
             for (Map.Entry<String, AttributeTemplate> entry : element.getAttributes().entrySet()) {
-                String value = xmlAttributes.getValue(entry.getKey());
+                String value = attributes.get(entry.getKey());
                 if (entry.getValue().hasAnnotation(Required.class) && value == null) {
                     throw new RequiredAttributeException(element.getName(), entry.getKey(), locator.getLineNumber(), locator.getColumnNumber());
                 }
