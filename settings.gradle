@@ -2,4 +2,5 @@ rootProject.name = 'jxsd'
 include 'xml'
 include 'xsd'
 include 'benchmark'
+include 'generator'
 

@@ -7,4 +7,12 @@ public class Attribute {
     protected String name;
     @Required
     protected String type;
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
 }

@@ -1,0 +1,5 @@
+dependencies {
+    compile project(":xml")
+    compile project(":xsd")
+    compile 'com.squareup:javapoet:1.4.0'
+}
