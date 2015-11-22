@@ -168,6 +168,14 @@ public class XMLReaderTest extends TestCase {
         assertNotNull(root);
     }
 
+    @Test
+    public void testAttributeNSValue() throws IOException {
+        XMLReader reader = new XMLReader();
+        reader.setNameNormalizer(FIRST_LOWER_CASE);
+        b root = reader.read(string("<B xmlns:xs=\"asd\"><A Foo=\"xs:test\"/></B>"), b.class);
+        assertNotNull(root);
+    }
+
     static class a {
         @Required
         String foo;

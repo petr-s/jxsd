@@ -40,6 +40,7 @@ public class XMLReader {
         try {
             SAXParserFactory spf = SAXParserFactory.newInstance();
             spf.setNamespaceAware(true);
+            spf.setFeature("http://xml.org/sax/features/namespace-prefixes", true);
             org.xml.sax.XMLReader reader = spf.newSAXParser().getXMLReader();
             reader.setContentHandler(handler);
             reader.parse(new InputSource(inputStream));
@@ -111,7 +112,11 @@ public class XMLReader {
         private HashMap<String, String> normalizeAttributes(Attributes attributes) {
             HashMap<String, String> normalizedAttributes = new HashMap<>();
             for (int i = 0; i < attributes.getLength(); i++) {
-                normalizedAttributes.put(normalizer.normalize(attributes.getLocalName(i)), attributes.getValue(i));
+                String name = attributes.getLocalName(i);
+                if (name.isEmpty()) {
+                    continue;
+                }
+                normalizedAttributes.put(normalizer.normalize(name), attributes.getValue(i));
             }
             return normalizedAttributes;
         }
