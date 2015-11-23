@@ -170,7 +170,8 @@ public class XMLReader {
             StackElement last = stack.peek();
             if (last.element.getValue() != null) {
                 try {
-                    last.element.getValue().set(last.instance, text.toString().replaceAll("\\s", ""));
+                    String value = text.toString().replaceAll("\\s", "");
+                    last.element.getValue().set(last.instance, parseTypedValue(last.element.getValue().getType(), value));
                     text.setLength(0);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -179,7 +180,7 @@ public class XMLReader {
             stack.pop();
         }
 
-        private Object parseAttribute(Class<?> clazz, String value) {
+        private Object parseTypedValue(Class<?> clazz, String value) {
             if (clazz.equals(String.class)) {
                 return value;
             } else if (clazz.equals(short.class) || clazz.equals(Short.class)) {
@@ -192,6 +193,8 @@ public class XMLReader {
                 return Float.valueOf(value);
             } else if (clazz.equals(double.class) || clazz.equals(Double.class)) {
                 return Double.valueOf(value);
+            } else if (clazz.isEnum()) {
+                return Enum.valueOf(clazz.asSubclass(Enum.class), value);
             }
             return null;
         }
@@ -204,7 +207,7 @@ public class XMLReader {
                 }
                 try {
                     Class<?> clazz = entry.getValue().getField().getType();
-                    Object typedValue = parseAttribute(clazz, value);
+                    Object typedValue = parseTypedValue(clazz, value);
                     if (typedValue == null) {
                         throw new UnsupportedAttributeType(element.getName(), clazz, locator.getLineNumber(), locator.getColumnNumber());
                     }
@@ -215,7 +218,7 @@ public class XMLReader {
             }
         }
 
-        public T getRoot() {
+        public synchronized T getRoot() {
             return root;
         }
     }
