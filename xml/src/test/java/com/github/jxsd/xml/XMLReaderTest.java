@@ -214,6 +214,7 @@ public class XMLReaderTest extends TestCase {
         reader.setNameNormalizer(FIRST_LOWER_CASE);
         b root = reader.read(string("<B xmlns:xs=\"asd\"><A Foo=\"xs:test\"/></B>"), b.class);
         assertNotNull(root);
+        assertEquals("test", root.as.get(0).foo);
     }
 
     @Test
